@@ -13,6 +13,23 @@
           max="100"
           class="quantity-input"
         />
+        <div class="difficulty-toggle">
+          <label>Difficulty:</label>
+          <button 
+            @click="difficulty = 'hard'" 
+            :class="{ active: difficulty === 'hard' }"
+            class="toggle-btn"
+          >
+            Hard
+          </button>
+          <button 
+            @click="difficulty = 'easy'" 
+            :class="{ active: difficulty === 'easy' }"
+            class="toggle-btn"
+          >
+            Easy
+          </button>
+        </div>
       </div>
       
       <button @click="generatePasswords" class="generate-btn">
@@ -41,10 +58,12 @@
 <script setup>
 import { ref } from 'vue'
 import { words } from './wordlist.js'
+import { myWords } from './easywords.js'
 
 const passwords = ref([])
 console.log('wordlist length:', words.length)
 const quantity = ref(10)
+const difficulty = ref('hard') // 'hard' or 'easy'
 const copyButtonText = ref('Copy All')
 const passwordTextarea = ref(null)
 
@@ -57,6 +76,62 @@ const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)]
 
 // Generate a random number between min and max (inclusive)
 const getRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
+
+const generateEasyPassword = () => {
+  const MIN_LENGTH = 8
+  const MAX_LENGTH = 12
+  let attempts = 0
+  
+  // Randomly choose between 2 words or 1 word
+  const useTwoWords = Math.random() < 0.5
+  
+  while (true) {
+    attempts++
+    
+    // Pick a number between 0-20
+    const number = getRandomNumber(0, 20)
+    
+    // Pick a symbol (= or -)
+    const symbol = Math.random() < 0.5 ? '=' : '-'
+    
+    let assembledPassword
+    
+    if (useTwoWords) {
+      // Mode 1: 2 short words + number
+      const word1 = getRandomElement(myWords).toLowerCase()
+      const word2 = getRandomElement(myWords).toLowerCase()
+      
+      // Random arrangement
+      const arrangement = getRandomNumber(0, 2)
+      if (arrangement === 0) {
+        assembledPassword = `${word1}${symbol}${word2}${symbol}${number}`
+      } else if (arrangement === 1) {
+        assembledPassword = `${word1}${symbol}${number}${symbol}${word2}`
+      } else {
+        assembledPassword = `${number}${symbol}${word1}${symbol}${word2}`
+      }
+    } else {
+      // Mode 2: 1 longer word + number
+      const word = getRandomElement(myWords).toLowerCase()
+      
+      // Random arrangement
+      assembledPassword = Math.random() < 0.5 
+        ? `${word}${symbol}${number}`
+        : `${number}${symbol}${word}`
+    }
+    
+    // Check if password length is within range
+    if (assembledPassword.length >= MIN_LENGTH && assembledPassword.length <= MAX_LENGTH) {
+      return assembledPassword
+    }
+    
+    // Safety check: prevent infinite loops
+    if (attempts > 1000) {
+      console.error('Could not generate valid easy password after 1000 attempts')
+      return null
+    }
+  }
+}
 
 const generateSinglePassword = () => {
   const MIN_LENGTH = 12
@@ -148,7 +223,9 @@ const generatePasswords = () => {
   const count = Math.min(Math.max(1, quantity.value), 100) // Clamp between 1-100
   
   for (let i = 0; i < count; i++) {
-    const password = generateSinglePassword()
+    const password = difficulty.value === 'easy' 
+      ? generateEasyPassword() 
+      : generateSinglePassword()
     if (password) {
       newPasswords.push(password)
     }
@@ -235,6 +312,37 @@ h1 {
   /* slightly darker blue on focus */
   border-color: #1B4F8B;
   box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+}
+
+.difficulty-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.difficulty-toggle label {
+  margin: 0;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid #2B6CB0;
+  background: white;
+  color: #2B6CB0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: #f0f0f0;
+}
+
+.toggle-btn.active {
+  background: #2B6CB0;
+  color: white;
 }
 
 .generate-btn {
@@ -329,6 +437,15 @@ h1 {
   
   .quantity-input {
     max-width: none;
+  }
+  
+  .difficulty-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .toggle-btn {
+    flex: 1;
   }
   
   .list-header {

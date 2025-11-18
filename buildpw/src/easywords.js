@@ -800,3 +800,5 @@ const myWords = [
 'wore',
 'yet'
 ]
+
+export { myWords }
