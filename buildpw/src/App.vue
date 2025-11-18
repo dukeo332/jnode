@@ -237,16 +237,50 @@ const generatePasswords = () => {
 
 const copyAllPasswords = async () => {
   if (passwords.value.length === 0) return
-  
+
+  const text = passwords.value.join('\n')
+
+  // Try modern Clipboard API first (requires secure context / localhost)
   try {
-    const text = passwords.value.join('\n')
-    await navigator.clipboard.writeText(text)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      throw new Error('Clipboard API not available')
+    }
+
     copyButtonText.value = 'Copied!'
     setTimeout(() => {
       copyButtonText.value = 'Copy All'
     }, 2000)
+    return
   } catch (err) {
-    console.error('Failed to copy:', err)
+    // fallback below
+    console.warn('Clipboard API failed, falling back to execCommand copy:', err)
+  }
+
+  // Fallback for insecure origins / older browsers: use a temporary textarea + execCommand('copy')
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    // keep it out of view
+    ta.style.position = 'fixed'
+    ta.style.left = '-9999px'
+    document.body.appendChild(ta)
+    ta.select()
+    ta.setSelectionRange(0, ta.value.length)
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+
+    if (ok) {
+      copyButtonText.value = 'Copied!'
+      setTimeout(() => {
+        copyButtonText.value = 'Copy All'
+      }, 2000)
+    } else {
+      throw new Error('execCommand copy returned false')
+    }
+  } catch (err2) {
+    console.error('Failed to copy:', err2)
     copyButtonText.value = 'Failed'
     setTimeout(() => {
       copyButtonText.value = 'Copy All'
