@@ -68,8 +68,9 @@ const copyButtonText = ref('Copy All')
 const passwordTextarea = ref(null)
 
 // Symbol arrays
-const symbolsNonShift = ['`', '-', '=', '[', ']', '\\', ';', "'", ',', '.', '/']
-const symbolsShift = ['~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':', '"', '<', '>', '?']
+// Excluded: ` (backtick), " (double quote), < > (angle brackets), ? (question mark) - can break scripts/CSV
+const symbolsNonShift = ['-', '=', '[', ']', '\\', ';', "'", ',', '.', '/']
+const symbolsShift = ['~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':']
 
 // Get random element from array
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)]
